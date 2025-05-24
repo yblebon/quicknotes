@@ -3,164 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Healthy Meal Planner</title>
+    <title>Local Storage Text Saver</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            text-align: center;
+            background-color: #f4f4f9;
         }
         h1 {
-            text-align: center;
             color: #333;
         }
         .input-container {
-            text-align: center;
             margin-bottom: 20px;
         }
-        input[type="number"] {
-            padding: 10px;
+        input[type="text"] {
+            padding: 12px;
+            width: 250px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
             font-size: 16px;
-            width: 200px;
-            margin-right: 10px;
-        }
-        input[type="checkbox"] {
-            margin: 10px;
         }
         button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #28a745;
+            padding: 12px 24px;
+            background-color: #007bff;
             color: white;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
         }
         button:hover {
-            background-color: #218838;
+            background-color: #0056b3;
         }
-        #mealPlan {
+        .table-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
             background-color: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        .day {
-            margin-bottom: 20px;
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
         }
-        .day h3 {
-            color: #007bff;
+        th {
+            background-color: #007bff;
+            color: white;
         }
-        .error {
-            color: red;
-            text-align: center;
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .delete-btn:hover {
+            background-color: #b02a37;
+        }
+        .no-entries {
+            color: #666;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <h1>Weekly Healthy Meal Planner</h1>
+    <h1>Text Storage</h1>
     <div class="input-container">
-        <input type="number" id="budget" placeholder="Enter your budget ($)" min="0" step="0.01">
-        <label><input type="checkbox" id="noCook"> No-Cook Meals Only</label>
-        <button onclick="generateMealPlan()">Plan My Meals</button>
+        <input type="text" id="textInput" placeholder="Enter text here">
+        <button onclick="saveText()">Save Text</button>
     </div>
-    <div id="mealPlan"></div>
+    <div class="table-container">
+        <h2>Stored Entries</h2>
+        <table id="entryTable">
+            <thead>
+                <tr>
+                    <th>Text</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="entryBody"></tbody>
+        </table>
+        <p id="noEntries" class="no-entries" style="display: none;">No entries yet.</p>
+    </div>
 
     <script>
-        // Food items with approximate prices per serving (in USD)
-        const foodItems = [
-            // All foods (including those requiring cooking)
-            { name: "Oatmeal", price: 0.30, type: "breakfast", requiresCooking: true },
-            { name: "Banana", price: 0.20, type: "breakfast", requiresCooking: false },
-            { name: "Greek Yogurt", price: 0.80, type: "breakfast", requiresCooking: false },
-            { name: "Brown Rice", price: 0.25, type: "lunch/dinner", requiresCooking: true },
-            { name: "Black Beans (canned)", price: 0.40, type: "lunch/dinner", requiresCooking: false },
-            { name: "Chicken Breast", price: 1.00, type: "lunch/dinner", requiresCooking: true },
-            { name: "Broccoli", price: 0.50, type: "lunch/dinner", requiresCooking: true },
-            { name: "Carrots (baby carrots)", price: 0.30, type: "lunch/dinner", requiresCooking: false },
-            { name: "Apple", price: 0.25, type: "snack", requiresCooking: false },
-            { name: "Almonds (small serving)", price: 0.50, type: "snack", requiresCooking: false },
-            // Additional no-cook items
-            { name: "Hummus (with veggies)", price: 0.60, type: "lunch/dinner", requiresCooking: false },
-            { name: "Pre-cooked Tuna (canned)", price: 0.70, type: "lunch/dinner", requiresCooking: false },
-            { name: "Whole Wheat Bread", price: 0.20, type: "lunch/dinner", requiresCooking: false },
-            { name: "Peanut Butter", price: 0.30, type: "breakfast", requiresCooking: false }
-        ];
+        // Load stored entries on page load
+        window.onload = loadEntries;
 
-        function generateMealPlan() {
-            const budgetInput = document.getElementById("budget").value;
-            const noCook = document.getElementById("noCook").checked;
-            const weeklyBudget = parseFloat(budgetInput);
-            const mealPlanDiv = document.getElementById("mealPlan");
-            mealPlanDiv.innerHTML = "";
-
-            if (isNaN(weeklyBudget) || weeklyBudget <= 0) {
-                mealPlanDiv.innerHTML = '<p class="error">Please enter a valid budget amount.</p>';
-                return;
+        function saveText() {
+            const input = document.getElementById('textInput');
+            const text = input.value.trim();
+            if (text) {
+                // Get existing entries or initialize empty array
+                let entries = JSON.parse(localStorage.getItem('textEntries')) || [];
+                const entry = {
+                    text: text,
+                    timestamp: new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' })
+                };
+                entries.push(entry);
+                localStorage.setItem('textEntries', JSON.stringify(entries));
+                input.value = ''; // Clear input
+                loadEntries(); // Refresh table
             }
-
-            const dailyBudget = weeklyBudget / 7;
-            const mealsPerDay = 3; // Breakfast, Lunch, Dinner
-            const budgetPerMeal = dailyBudget / mealsPerDay;
-
-            if (budgetPerMeal < 0.60) {
-                mealPlanDiv.innerHTML = '<p class="error">Budget is too low to plan healthy meals. Please increase your budget.</p>';
-                return;
-            }
-
-            const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-            let output = "";
-
-            days.forEach(day => {
-                let dailyCost = 0;
-                let dailyMeals = `<div class="day"><h3>${day}</h3>`;
-
-                // Breakfast
-                let breakfast = selectMeal("breakfast", budgetPerMeal, noCook);
-                dailyCost += breakfast.cost;
-                dailyMeals += `<p><strong>Breakfast:</strong> ${breakfast.items.join(", ")} ($${breakfast.cost.toFixed(2)})</p>`;
-
-                // Lunch
-                let lunch = selectMeal("lunch/dinner", budgetPerMeal, noCook);
-                dailyCost += lunch.cost;
-                dailyMeals += `<p><strong>Lunch:</strong> ${lunch.items.join(", ")} ($${lunch.cost.toFixed(2)})</p>`;
-
-                // Dinner
-                let dinner = selectMeal("lunch/dinner", budgetPerMeal, noCook);
-                dailyCost += dinner.cost;
-                dailyMeals += `<p><strong>Dinner:</strong> ${dinner.items.join(", ")} ($${dinner.cost.toFixed(2)})</p>`;
-
-                // Snack (if budget allows)
-                let snack = selectMeal("snack", budgetPerMeal / 2, noCook);
-                if (snack.items.length > 0 && (dailyCost + snack.cost) <= dailyBudget) {
-                    dailyCost += snack.cost;
-                    dailyMeals += `<p><strong>Snack:</strong> ${snack.items.join(", ")} ($${snack.cost.toFixed(2)})</p>`;
-                }
-
-                dailyMeals += `<p><strong>Total Daily Cost:</strong> $${dailyCost.toFixed(2)}</p></div>`;
-                output += dailyMeals;
-            });
-
-            mealPlanDiv.innerHTML = output;
         }
 
-        function selectMeal(type, budget, noCook) {
-            let availableItems = foodItems.filter(item => item.type === type && (!noCook || !item.requiresCooking));
-            let selectedItems = [];
-            let totalCost = 0;
+        function loadEntries() {
+            const entryBody = document.getElementById('entryBody');
+            const noEntries = document.getElementById('noEntries');
+            entryBody.innerHTML = ''; // Clear current table body
+            const entries = JSON.parse(localStorage.getItem('textEntries')) || [];
 
-            // Shuffle items to add variety
-            availableItems = availableItems.sort(() => Math.random() - 0.5);
-
-            for (let item of availableItems) {
-                if (totalCost + item.price <= budget) {
-                    selectedItems.push(item.name);
-                    totalCost += item.price;
-                }
+            if (entries.length === 0) {
+                noEntries.style.display = 'block';
+            } else {
+                noEntries.style.display = 'none';
+                entries.forEach((entry, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${entry.text}</td>
+                        <td>${entry.timestamp}</td>
+                        <td><button class="delete-btn" onclick="deleteEntry(${index})">Delete</button></td>
+                    `;
+                    entryBody.appendChild(row);
+                });
             }
+        }
 
-            return { items: selectedItems, cost: totalCost };
+        function deleteEntry(index) {
+            let entries = JSON.parse(localStorage.getItem('textEntries')) || [];
+            entries.splice(index, 1); // Remove entry at index
+            localStorage.setItem('textEntries', JSON.stringify(entries));
+            loadEntries(); // Refresh table
         }
     </script>
 </body>
