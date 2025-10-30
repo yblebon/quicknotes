@@ -1,151 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local Storage Text Saver</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 20px;
-            text-align: center;
-            background-color: #f4f4f9;
-        }
-        h1 {
-            color: #333;
-        }
-        .input-container {
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            padding: 12px;
-            width: 250px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        button {
-            padding: 12px 24px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .table-container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #007bff;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        .delete-btn {
-            background-color: #dc3545;
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-        .delete-btn:hover {
-            background-color: #b02a37;
-        }
-        .no-entries {
-            color: #666;
-            font-style: italic;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priority To-Do List</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .todo-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 500px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      cursor: pointer;
+      background-color: #f4f4f4;
+    }
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    .completed {
+      text-decoration: line-through;
+      color: #999;
+    }
+    .deadline-warning {
+      background-color: orange;
+    }
+    .deadline-danger {
+      background-color: red;
+      color: white;
+    }
+  </style>
 </head>
 <body>
-    <h1>Quick notes</h1>
-    <div class="input-container">
-        <input type="text" id="textInput" placeholder="Enter text here">
-        <button onclick="saveText()">Save Text</button>
-    </div>
-    <div class="table-container">
-        <h2>Stored Entries</h2>
-        <table id="entryTable">
-            <thead>
-                <tr>
-                    <th>Text</th>
-                    <th>Timestamp</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="entryBody"></tbody>
-        </table>
-        <p id="noEntries" class="no-entries" style="display: none;">No entries yet.</p>
-    </div>
+  <div class="todo-container">
+    <h1>Priority To-Do List</h1>
+    <input type="text" id="task-input" placeholder="Task name">
+    <input type="text" id="description-input" placeholder="Optional description">
+    <input type="text" id="tags-input" placeholder="Tags (comma-separated)">
+    <input type="datetime-local" id="date-input" readonly>
+    <input type="date" id="deadline-input" placeholder="Deadline">
+    <button id="add-btn">Add Task</button>
+    <table>
+      <thead>
+        <tr>
+          <th data-column="task">Task</th>
+          <th data-column="description">Description</th>
+          <th data-column="tags">Tags</th>
+          <th data-column="date">Created Date</th>
+          <th data-column="deadline">Deadline</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="todo-list">
+      </tbody>
+    </table>
+  </div>
 
-    <script>
-        // Load stored entries on page load
-        window.onload = loadEntries;
+  <script>
+    const taskInput = document.getElementById('task-input');
+    const descriptionInput = document.getElementById('description-input');
+    const tagsInput = document.getElementById('tags-input');
+    const dateInput = document.getElementById('date-input');
+    const deadlineInput = document.getElementById('deadline-input');
+    const addBtn = document.getElementById('add-btn');
+    const todoList = document.getElementById('todo-list');
+    const headers = document.querySelectorAll('th[data-column]');
 
-        function saveText() {
-            const input = document.getElementById('textInput');
-            const text = input.value.trim();
-            if (text) {
-                // Get existing entries or initialize empty array
-                let entries = JSON.parse(localStorage.getItem('textEntries')) || [];
-                const entry = {
-                    text: text,
-                    timestamp: new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' })
-                };
-                entries.push(entry);
-                localStorage.setItem('textEntries', JSON.stringify(entries));
-                input.value = ''; // Clear input
-                loadEntries(); // Refresh table
-            }
+    let tasks = [];
+    let sortConfig = { column: 'date', ascending: true };
+
+    // Initialize date input with current date and time
+    function setCurrentDateTime() {
+      const now = new Date();
+      const formattedDateTime = now.toISOString().slice(0, 16); // Format as YYYY-MM-DDTHH:MM
+      dateInput.value = formattedDateTime;
+    }
+
+    // Save tasks to local storage
+    function saveToLocalStorage() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    // Load tasks from local storage
+    function loadFromLocalStorage() {
+      const storedTasks = localStorage.getItem('tasks');
+      if (storedTasks) {
+        tasks = JSON.parse(storedTasks);
+        renderTasks();
+      }
+    }
+
+    // Highlight rows based on deadline proximity
+    function getDeadlinePriority(deadline) {
+      if (!deadline) return 3; // No deadline -> Lowest priority
+
+      const now = new Date();
+      const deadlineDate = new Date(deadline);
+      const timeDifference = deadlineDate - now;
+
+      if (timeDifference <= 24 * 60 * 60 * 1000) {
+        return 1; // Less than 24 hours -> Red (High priority)
+      } else if (timeDifference <= 48 * 60 * 60 * 1000) {
+        return 2; // Less than 48 hours -> Orange (Medium priority)
+      } else {
+        return 3; // More than 48 hours -> No highlight (Low priority)
+      }
+    }
+
+    function highlightRows(row, priority) {
+      if (priority === 1) {
+        row.classList.add('deadline-danger'); // Red
+      } else if (priority === 2) {
+        row.classList.add('deadline-warning'); // Orange
+      }
+    }
+
+    // Render tasks to the table
+    function renderTasks() {
+      todoList.innerHTML = '';
+      const sortedTasks = [...tasks].sort((a, b) => {
+        // Sort based on priority first
+        const priorityA = getDeadlinePriority(a.deadline);
+        const priorityB = getDeadlinePriority(b.deadline);
+
+        if (priorityA !== priorityB) return priorityA - priorityB;
+
+        // If priority is the same, sort by the configured column
+        const col = sortConfig.column;
+        if (a[col] < b[col]) return sortConfig.ascending ? -1 : 1;
+        if (a[col] > b[col]) return sortConfig.ascending ? 1 : -1;
+        return 0;
+      });
+
+      sortedTasks.forEach((task, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="${task.completed ? 'completed' : ''}">${task.task}</td>
+          <td>${task.description || ''}</td>
+          <td>${task.tags || ''}</td>
+          <td>${task.date || ''}</td>
+          <td>${task.deadline || ''}</td>
+          <td>
+            <button class="delete-btn" data-index="${index}">Delete</button>
+          </td>
+        `;
+
+        // Highlight rows based on deadline priority
+        const priority = getDeadlinePriority(task.deadline);
+        highlightRows(row, priority);
+
+        row.addEventListener('click', (e) => {
+          if (e.target.tagName !== 'BUTTON') {
+            task.completed = !task.completed;
+            saveToLocalStorage();
+            renderTasks();
+          }
+        });
+        todoList.appendChild(row);
+      });
+    }
+
+    // Add a new task
+    addBtn.addEventListener('click', () => {
+      const newTask = {
+        task: taskInput.value.trim(),
+        description: descriptionInput.value.trim(),
+        tags: tagsInput.value.trim(),
+        date: dateInput.value,
+        deadline: deadlineInput.value,
+        completed: false,
+      };
+
+      if (!newTask.task) {
+        alert('Task name is required!');
+        return;
+      }
+      tasks.push(newTask);
+      saveToLocalStorage();
+      renderTasks();
+      taskInput.value = '';
+      descriptionInput.value = '';
+      tagsInput.value = '';
+      deadlineInput.value = '';
+      setCurrentDateTime();
+    });
+
+    // Delete a task
+    todoList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        const index = e.target.getAttribute('data-index');
+        tasks.splice(index, 1);
+        saveToLocalStorage();
+        renderTasks();
+      }
+    });
+
+    // Sort tasks by column
+    headers.forEach(header => {
+      header.addEventListener('click', () => {
+        const column = header.getAttribute('data-column');
+        if (sortConfig.column === column) {
+          sortConfig.ascending = !sortConfig.ascending;
+        } else {
+          sortConfig.column = column;
+          sortConfig.ascending = true;
         }
+        renderTasks();
+      });
+    });
 
-        function loadEntries() {
-            const entryBody = document.getElementById('entryBody');
-            const noEntries = document.getElementById('noEntries');
-            entryBody.innerHTML = ''; // Clear current table body
-            const entries = JSON.parse(localStorage.getItem('textEntries')) || [];
-
-            if (entries.length === 0) {
-                noEntries.style.display = 'block';
-            } else {
-                noEntries.style.display = 'none';
-                entries.forEach((entry, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${entry.text}</td>
-                        <td>${entry.timestamp}</td>
-                        <td><button class="delete-btn" onclick="deleteEntry(${index})">Delete</button></td>
-                    `;
-                    entryBody.appendChild(row);
-                });
-            }
-        }
-
-        function deleteEntry(index) {
-            let entries = JSON.parse(localStorage.getItem('textEntries')) || [];
-            entries.splice(index, 1); // Remove entry at index
-            localStorage.setItem('textEntries', JSON.stringify(entries));
-            loadEntries(); // Refresh table
-        }
-    </script>
+    // Set the initial date and load saved tasks
+    setCurrentDateTime();
+    loadFromLocalStorage();
+  </script>
 </body>
 </html>
