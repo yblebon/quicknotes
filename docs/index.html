@@ -1,270 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Priority To-Do List</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Todo List with Deadline, Priority Ordering, Copy & Clickable URLs</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f9;
-      color: #333;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .todo-container {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      width: 500px;
-    }
-    h1 {
-      text-align: center;
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #218838;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-    }
-    th {
-      cursor: pointer;
-      background-color: #f4f4f4;
-    }
-    .delete-btn {
-      background: #dc3545;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 5px 10px;
-      cursor: pointer;
-    }
-    .delete-btn:hover {
-      background: #c82333;
-    }
-    .completed {
-      text-decoration: line-through;
-      color: #999;
-    }
-    .deadline-warning {
-      background-color: orange;
-    }
-    .deadline-danger {
-      background-color: red;
-      color: white;
-    }
+    body{font-family:Arial,Helvetica,sans-serif;display:flex;justify-content:center;align-items:flex-start;padding:40px;background:#f6f7fb}
+    .container{width:700px;background:#fff;padding:18px;border-radius:8px;box-shadow:0 6px 20px rgba(20,30,60,0.08)}
+    .header{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+    input[type="text"], input[type="date"]{padding:10px;border:1px solid #d8dbe6;border-radius:6px;font-size:14px}
+    .add-btn{background:#2563eb;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
+    .todo-list{list-style:none;padding:0;margin:0}
+    .todo-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-top:1px solid #eef0f6;border-radius:6px;margin-top:8px}
+    .left{display:flex;flex-direction:column;gap:6px;width:65%}
+    .title{font-size:15px;color:#0f172a;word-break:break-word}
+    .title.completed{text-decoration:line-through;color:#94a3b8}
+    .meta{font-size:12px;color:#64748b}
+    .right{display:flex;gap:8px;align-items:center}
+    button.action{padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:13px}
+    .complete{background:#10b981;color:#fff}
+    .delete{background:#ef4444;color:#fff}
+    .copy{background:#6b7280;color:#fff} /* gray */
+    .small-muted{font-size:12px;color:#94a3b8}
+    a.task-link{color:#2563eb;text-decoration:underline;word-break:break-all}
+    /* urgency colors */
+    .urgent-24{background:linear-gradient(90deg, rgba(254,202,202,0.18), rgba(254,202,202,0.05));border-left:4px solid #ef4444}
+    .urgent-48{background:linear-gradient(90deg, rgba(255,243,205,0.14), rgba(255,243,205,0.03));border-left:4px solid #f59e0b}
+    @media(max-width:640px){.container{width:100%}}
   </style>
 </head>
 <body>
-  <div class="todo-container">
-    <h1>Priority To-Do List</h1>
-    <input type="text" id="task-input" placeholder="Task name">
-    <input type="text" id="description-input" placeholder="Optional description">
-    <input type="text" id="tags-input" placeholder="Tags (comma-separated)">
-    <input type="datetime-local" id="date-input" readonly>
-    <input type="date" id="deadline-input" placeholder="Deadline">
-    <button id="add-btn">Add Task</button>
-    <table>
-      <thead>
-        <tr>
-          <th data-column="task">Task</th>
-          <th data-column="description">Description</th>
-          <th data-column="tags">Tags</th>
-          <th data-column="date">Created Date</th>
-          <th data-column="deadline">Deadline</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="todo-list">
-      </tbody>
-    </table>
+  <div class="container">
+    <div class="header">
+      <input id="todoInput" type="text" placeholder="Task description (required) — paste an URL to make it clickable" />
+      <input id="deadlineInput" type="date" title="Optional deadline" />
+      <button class="add-btn" onclick="addTodo()">Add</button>
+    </div>
+
+    <ul id="todoList" class="todo-list"></ul>
+    <p class="small-muted" style="margin-top:10px">Rows highlighted red if deadline &lt;24h, orange if &lt;48h. List ordered: red, orange, then others. Clickable URLs detected in task text.</p>
   </div>
 
   <script>
-    const taskInput = document.getElementById('task-input');
-    const descriptionInput = document.getElementById('description-input');
-    const tagsInput = document.getElementById('tags-input');
-    const dateInput = document.getElementById('date-input');
-    const deadlineInput = document.getElementById('deadline-input');
-    const addBtn = document.getElementById('add-btn');
-    const todoList = document.getElementById('todo-list');
-    const headers = document.querySelectorAll('th[data-column]');
+    const todoInput = document.getElementById('todoInput')
+    const deadlineInput = document.getElementById('deadlineInput')
+    const todoList = document.getElementById('todoList')
+    let todos = []
 
-    let tasks = [];
-    let sortConfig = { column: 'date', ascending: true };
-
-    // Initialize date input with current date and time
-    function setCurrentDateTime() {
-      const now = new Date();
-      const formattedDateTime = now.toISOString().slice(0, 16); // Format as YYYY-MM-DDTHH:MM
-      dateInput.value = formattedDateTime;
+    function formatDateISOToLocal(iso) {
+      if (!iso) return ''
+      const d = new Date(iso + 'T00:00:00')
+      if (isNaN(d)) return iso
+      return d.toLocaleDateString()
     }
 
-    // Save tasks to local storage
-    function saveToLocalStorage() {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
+    function todayLocaleDate() {
+      return new Date().toLocaleDateString()
     }
 
-    // Load tasks from local storage
-    function loadFromLocalStorage() {
-      const storedTasks = localStorage.getItem('tasks');
-      if (storedTasks) {
-        tasks = JSON.parse(storedTasks);
-        renderTasks();
-      }
-    }
-
-    // Highlight rows based on deadline proximity
-    function getDeadlinePriority(deadline) {
-      if (!deadline) return 3; // No deadline -> Lowest priority
-
-      const now = new Date();
-      const deadlineDate = new Date(deadline);
-      const timeDifference = deadlineDate - now;
-
-      if (timeDifference <= 24 * 60 * 60 * 1000) {
-        return 1; // Less than 24 hours -> Red (High priority)
-      } else if (timeDifference <= 48 * 60 * 60 * 1000) {
-        return 2; // Less than 48 hours -> Orange (Medium priority)
-      } else {
-        return 3; // More than 48 hours -> No highlight (Low priority)
-      }
-    }
-
-    function highlightRows(row, priority) {
-      if (priority === 1) {
-        row.classList.add('deadline-danger'); // Red
-      } else if (priority === 2) {
-        row.classList.add('deadline-warning'); // Orange
-      }
-    }
-
-    // Render tasks to the table
-    function renderTasks() {
-      todoList.innerHTML = '';
-      const sortedTasks = [...tasks].sort((a, b) => {
-        // Sort based on priority first
-        const priorityA = getDeadlinePriority(a.deadline);
-        const priorityB = getDeadlinePriority(b.deadline);
-
-        if (priorityA !== priorityB) return priorityA - priorityB;
-
-        // If priority is the same, sort by the configured column
-        const col = sortConfig.column;
-        if (a[col] < b[col]) return sortConfig.ascending ? -1 : 1;
-        if (a[col] > b[col]) return sortConfig.ascending ? 1 : -1;
-        return 0;
-      });
-
-      sortedTasks.forEach((task, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td class="${task.completed ? 'completed' : ''}">${task.task}</td>
-          <td>${task.description || ''}</td>
-          <td>${task.tags || ''}</td>
-          <td>${task.date || ''}</td>
-          <td>${task.deadline || ''}</td>
-          <td>
-            <button class="delete-btn" data-index="${index}">Delete</button>
-          </td>
-        `;
-
-        // Highlight rows based on deadline priority
-        const priority = getDeadlinePriority(task.deadline);
-        highlightRows(row, priority);
-
-        row.addEventListener('click', (e) => {
-          if (e.target.tagName !== 'BUTTON') {
-            task.completed = !task.completed;
-            saveToLocalStorage();
-            renderTasks();
-          }
-        });
-        todoList.appendChild(row);
-      });
-    }
-
-    // Add a new task
-    addBtn.addEventListener('click', () => {
-      const newTask = {
-        task: taskInput.value.trim(),
-        description: descriptionInput.value.trim(),
-        tags: tagsInput.value.trim(),
-        date: dateInput.value,
-        deadline: deadlineInput.value,
+    function addTodo() {
+      const text = todoInput.value.trim()
+      if (!text) return
+      const deadlineValue = deadlineInput.value || null
+      todos.push({
+        text,
         completed: false,
-      };
+        added: todayLocaleDate(),
+        deadline: deadlineValue // yyyy-mm-dd or null
+      })
+      todoInput.value = ''
+      deadlineInput.value = ''
+      render()
+    }
 
-      if (!newTask.task) {
-        alert('Task name is required!');
-        return;
+    function toggleComplete(i) {
+      todos[i].completed = !todos[i].completed
+      render()
+    }
+
+    function deleteTodo(i) {
+      todos.splice(i,1)
+      render()
+    }
+
+    function copyTaskToClipboard(i) {
+      const t = todos[i]
+      const parts = [`${t.text}`]
+      if (t.deadline) parts.push(`Deadline: ${formatDateISOToLocal(t.deadline)}`)
+      parts.push(`Added: ${t.added}`)
+      const textToCopy = parts.join(' | ')
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).catch(()=>fallbackCopy(textToCopy))
+      } else {
+        fallbackCopy(textToCopy)
       }
-      tasks.push(newTask);
-      saveToLocalStorage();
-      renderTasks();
-      taskInput.value = '';
-      descriptionInput.value = '';
-      tagsInput.value = '';
-      deadlineInput.value = '';
-      setCurrentDateTime();
-    });
+    }
 
-    // Delete a task
-    todoList.addEventListener('click', (e) => {
-      if (e.target.classList.contains('delete-btn')) {
-        const index = e.target.getAttribute('data-index');
-        tasks.splice(index, 1);
-        saveToLocalStorage();
-        renderTasks();
-      }
-    });
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      try { document.execCommand('copy') } catch(e){}
+      document.body.removeChild(ta)
+    }
 
-    // Sort tasks by column
-    headers.forEach(header => {
-      header.addEventListener('click', () => {
-        const column = header.getAttribute('data-column');
-        if (sortConfig.column === column) {
-          sortConfig.ascending = !sortConfig.ascending;
-        } else {
-          sortConfig.column = column;
-          sortConfig.ascending = true;
+    function urgencyRank(deadlineIso) {
+      if (!deadlineIso) return 3
+      const dl = new Date(deadlineIso + 'T00:00:00')
+      const now = new Date()
+      const diffHours = (dl.getTime() - now.getTime()) / (1000*60*60)
+      if (diffHours < 0) return 1
+      if (diffHours <= 24) return 1
+      if (diffHours <= 48) return 2
+      return 3
+    }
+
+    function getUrgencyClass(deadlineIso) {
+      const rank = urgencyRank(deadlineIso)
+      if (rank === 1) return 'urgent-24'
+      if (rank === 2) return 'urgent-48'
+      return ''
+    }
+
+    // convert plain text to nodes with clickable links for URLs
+    function createTextWithLinks(text) {
+      // simple URL regex (matches http(s)://... and www.)
+      const urlRegex = /((https?:\/\/|www\.)[^\s<>"]+[^\s<>".,;:!?])/gi
+      const frag = document.createDocumentFragment()
+      let lastIndex = 0
+      let m
+      while ((m = urlRegex.exec(text)) !== null) {
+        const idx = m.index
+        if (idx > lastIndex) {
+          frag.appendChild(document.createTextNode(text.slice(lastIndex, idx)))
         }
-        renderTasks();
-      });
-    });
+        let url = m[0]
+        // ensure scheme
+        if (!/^https?:\/\//i.test(url)) url = 'http://' + url
+        const a = document.createElement('a')
+        a.href = url
+        a.target = '_blank'
+        a.rel = 'noopener noreferrer'
+        a.className = 'task-link'
+        a.textContent = m[0]
+        frag.appendChild(a)
+        lastIndex = idx + m[0].length
+      }
+      if (lastIndex < text.length) {
+        frag.appendChild(document.createTextNode(text.slice(lastIndex)))
+      }
+      // if no matches, just return a text node
+      if (!frag.childNodes.length) return document.createTextNode(text)
+      return frag
+    }
 
-    // Set the initial date and load saved tasks
-    setCurrentDateTime();
-    loadFromLocalStorage();
+    function render() {
+      todoList.innerHTML = ''
+      const indexed = todos.map((t,i)=>({t,i,rank:urgencyRank(t.deadline)}))
+      indexed.sort((a,b)=>{
+        if (a.rank !== b.rank) return a.rank - b.rank
+        return a.i - b.i
+      })
+      indexed.forEach(({t, i}) => {
+        const li = document.createElement('li')
+        li.className = 'todo-item ' + getUrgencyClass(t.deadline)
+
+        const left = document.createElement('div')
+        left.className = 'left'
+
+        const title = document.createElement('div')
+        title.className = 'title' + (t.completed ? ' completed' : '')
+        // insert clickable links into title
+        title.appendChild(createTextWithLinks(t.text))
+
+        const meta = document.createElement('div')
+        meta.className = 'meta'
+        const added = document.createElement('span')
+        added.textContent = 'Added: ' + t.added
+        meta.appendChild(added)
+
+        if (t.deadline) {
+          const sep = document.createElement('span')
+          sep.textContent = ' — '
+          const dl = document.createElement('span')
+          dl.textContent = 'Deadline: ' + formatDateISOToLocal(t.deadline)
+          dl.style.marginLeft = '6px'
+          meta.appendChild(sep)
+          meta.appendChild(dl)
+        }
+
+        left.appendChild(title)
+        left.appendChild(meta)
+
+        const right = document.createElement('div')
+        right.className = 'right'
+
+        const completeBtn = document.createElement('button')
+        completeBtn.className = 'action complete'
+        completeBtn.textContent = t.completed ? 'Undo' : 'Complete'
+        completeBtn.onclick = () => toggleComplete(i)
+
+        const copyBtn = document.createElement('button')
+        copyBtn.className = 'action copy'
+        copyBtn.textContent = 'Copy'
+        copyBtn.onclick = () => copyTaskToClipboard(i)
+
+        const deleteBtn = document.createElement('button')
+        deleteBtn.className = 'action delete'
+        deleteBtn.textContent = 'Delete'
+        deleteBtn.onclick = () => deleteTodo(i)
+
+        right.appendChild(completeBtn)
+        right.appendChild(copyBtn)
+        right.appendChild(deleteBtn)
+
+        li.appendChild(left)
+        li.appendChild(right)
+        todoList.appendChild(li)
+      })
+    }
   </script>
 </body>
 </html>
