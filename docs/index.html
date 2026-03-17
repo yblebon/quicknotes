@@ -1,251 +1,839 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Todo List (localStorage) — Deadline, Priority, Copy, Clickable URLs</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Tasks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;1,300&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;display:flex;justify-content:center;align-items:flex-start;padding:40px;background:#f6f7fb}
-    .container{width:700px;background:#fff;padding:18px;border-radius:8px;box-shadow:0 6px 20px rgba(20,30,60,0.08)}
-    .header{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-    input[type="text"], input[type="date"]{padding:10px;border:1px solid #d8dbe6;border-radius:6px;font-size:14px}
-    .add-btn{background:#2563eb;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
-    .todo-list{list-style:none;padding:0;margin:0}
-    .todo-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-top:1px solid #eef0f6;border-radius:6px;margin-top:8px}
-    .left{display:flex;flex-direction:column;gap:6px;width:65%}
-    .title{font-size:15px;color:#0f172a;word-break:break-word}
-    .title.completed{text-decoration:line-through;color:#94a3b8}
-    .meta{font-size:12px;color:#64748b}
-    .right{display:flex;gap:8px;align-items:center}
-    button.action{padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:13px}
-    .complete{background:#10b981;color:#fff}
-    .delete{background:#ef4444;color:#fff}
-    .copy{background:#6b7280;color:#fff} /* gray */
-    .small-muted{font-size:12px;color:#94a3b8}
-    a.task-link{color:#2563eb;text-decoration:underline;word-break:break-all}
-    /* urgency colors */
-    .urgent-24{background:linear-gradient(90deg, rgba(254,202,202,0.18), rgba(254,202,202,0.05));border-left:4px solid #ef4444}
-    .urgent-48{background:linear-gradient(90deg, rgba(255,243,205,0.14), rgba(255,243,205,0.03));border-left:4px solid #f59e0b}
-    @media(max-width:640px){.container{width:100%}}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #F2EFE9;
+      --surface:   #FFFFFF;
+      --surface2:  #F7F5F1;
+      --border:    #E4E0D8;
+      --text-1:    #1C1917;
+      --text-2:    #6B6560;
+      --text-3:    #A09890;
+      --accent:    #1C1917;
+      --red:       #C53030;
+      --red-bg:    #FFF5F5;
+      --red-border:#FC8181;
+      --orange:    #C05621;
+      --orange-bg: #FFFAF0;
+      --orange-brd:#F6AD55;
+      --amber:     #975A16;
+      --amber-bg:  #FEFCE8;
+      --amber-brd: #ECC94B;
+      --green:     #276749;
+      --green-bg:  #F0FFF4;
+      --green-brd: #68D391;
+      --radius:    10px;
+      --shadow:    0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-lg: 0 10px 32px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.04);
+      --font-serif: 'Fraunces', Georgia, serif;
+      --font-sans:  'Plus Jakarta Sans', system-ui, sans-serif;
+      --transition: 0.18s ease;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      padding: 40px 16px 80px;
+    }
+
+    /* ── Layout ── */
+    .app {
+      max-width: 660px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      margin-bottom: 32px;
+    }
+    .app-title {
+      font-family: var(--font-serif);
+      font-weight: 300;
+      font-size: 42px;
+      letter-spacing: -0.5px;
+      line-height: 1;
+      color: var(--text-1);
+    }
+    .app-title em {
+      font-style: italic;
+      color: var(--text-2);
+    }
+    .app-meta {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-3);
+      display: flex;
+      gap: 16px;
+    }
+    .meta-count { font-variant-numeric: tabular-nums; }
+
+    /* ── Add form ── */
+    .add-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    .add-form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .add-form-row:last-child { margin-bottom: 0; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .field input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--text-1);
+      background: var(--surface2);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field input:focus {
+      border-color: var(--text-2);
+      box-shadow: 0 0 0 3px rgba(28,25,23,.06);
+      background: var(--surface);
+    }
+    .field input::placeholder { color: var(--text-3); }
+
+    .add-btn {
+      align-self: flex-end;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity var(--transition), transform var(--transition);
+    }
+    .add-btn:hover { opacity: .85; }
+    .add-btn:active { transform: scale(.97); }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .filter-btn:hover { border-color: var(--text-2); color: var(--text-1); }
+    .filter-btn.active {
+      background: var(--text-1);
+      border-color: var(--text-1);
+      color: #fff;
+    }
+
+    /* ── Task list ── */
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ── Task card ── */
+    .task-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex;
+      transition: box-shadow var(--transition), opacity var(--transition);
+      animation: slideIn 0.2s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .task-card:hover { box-shadow: var(--shadow-lg); }
+    .task-card.completed { opacity: .55; }
+    .task-card.removing {
+      animation: slideOut 0.22s ease forwards;
+    }
+    @keyframes slideOut {
+      to { opacity: 0; transform: translateX(16px); max-height: 0; padding: 0; margin: 0; }
+    }
+
+    /* urgency strip */
+    .urgency-strip {
+      width: 4px;
+      flex-shrink: 0;
+      border-radius: 12px 0 0 12px;
+    }
+    .strip-overdue  { background: var(--red); }
+    .strip-urgent   { background: var(--orange); }
+    .strip-soon     { background: var(--amber); }
+    .strip-none     { background: transparent; }
+
+    .task-body {
+      padding: 14px 16px;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* checkbox */
+    .check-wrap {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      position: relative;
+    }
+    .check-wrap input[type=checkbox] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface2);
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+    }
+    .check-wrap input[type=checkbox]:checked {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .check-wrap input[type=checkbox]:checked::after {
+      content: '';
+      position: absolute;
+      left: 5px; top: 2px;
+      width: 6px; height: 10px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+    .check-wrap input[type=checkbox]:focus-visible {
+      outline: 2px solid var(--text-2);
+      outline-offset: 2px;
+    }
+
+    .task-content { flex: 1; min-width: 0; }
+    .task-text {
+      font-size: 14px;
+      color: var(--text-1);
+      word-break: break-word;
+      line-height: 1.5;
+    }
+    .task-text.done {
+      text-decoration: line-through;
+      color: var(--text-3);
+    }
+    .task-text a {
+      color: #2563eb;
+      text-underline-offset: 2px;
+    }
+    .task-badges {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+    .badge-overdue { background: var(--red-bg);    border-color: var(--red-border);   color: var(--red); }
+    .badge-urgent  { background: var(--orange-bg); border-color: var(--orange-brd);   color: var(--orange); }
+    .badge-soon    { background: var(--amber-bg);  border-color: var(--amber-brd);    color: var(--amber); }
+    .badge-done    { background: var(--green-bg);  border-color: var(--green-brd);    color: var(--green); }
+    .badge-date    { background: var(--surface2);  border-color: var(--border);       color: var(--text-3); }
+
+    /* actions */
+    .task-actions {
+      display: flex;
+      gap: 4px;
+      padding: 14px 12px 14px 0;
+      flex-shrink: 0;
+      align-items: center;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .task-card:hover .task-actions,
+    .task-card:focus-within .task-actions { opacity: 1; }
+
+    .icon-btn {
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface2);
+      cursor: pointer;
+      transition: all var(--transition);
+      color: var(--text-2);
+      font-size: 14px;
+    }
+    .icon-btn:hover { border-color: var(--text-2); color: var(--text-1); background: var(--surface); }
+    .icon-btn.delete:hover { border-color: var(--red-border); color: var(--red); background: var(--red-bg); }
+    .icon-btn:focus-visible { outline: 2px solid var(--text-2); outline-offset: 2px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-3);
+    }
+    .empty-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      opacity: .5;
+    }
+    .empty-title {
+      font-family: var(--font-serif);
+      font-weight: 300;
+      font-size: 20px;
+      color: var(--text-2);
+      margin-bottom: 6px;
+    }
+    .empty-sub { font-size: 13px; }
+
+    /* ── Toast system ── */
+    .toast-wrap {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--text-1);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      pointer-events: all;
+      animation: toastIn .2s ease;
+      white-space: nowrap;
+    }
+    @keyframes toastIn  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(8px); } }
+    .toast.out { animation: toastOut .2s ease forwards; }
+    .toast-action {
+      background: none;
+      border: 1px solid rgba(255,255,255,.4);
+      color: #fff;
+      border-radius: 12px;
+      padding: 2px 10px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .toast-action:hover { background: rgba(255,255,255,.15); }
+    .toast.error { background: var(--red); }
+
+    /* ── Section labels ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin: 20px 0 8px 4px;
+    }
+
+    @media (max-width: 520px) {
+      .app-title { font-size: 32px; }
+      .add-form-row { flex-direction: column; }
+      .add-btn { width: 100%; text-align: center; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <input id="todoInput" type="text" placeholder="Task description (required) — paste an URL to make it clickable" />
-      <input id="deadlineInput" type="date" title="Optional deadline" />
-      <button class="add-btn" onclick="addTodo()">Add</button>
+  <div class="app">
+
+    <header class="app-header" role="banner">
+      <h1 class="app-title">My <em>tasks</em></h1>
+      <div class="app-meta" aria-live="polite" aria-atomic="true">
+        <span class="meta-count" id="statsText"></span>
+      </div>
+    </header>
+
+    <section class="add-form" aria-label="Add new task">
+      <div class="add-form-row">
+        <div class="field" style="flex:2">
+          <label class="field-label" for="todoInput">Task</label>
+          <input
+            id="todoInput"
+            type="text"
+            placeholder="What needs doing? Paste a URL to make it clickable"
+            autocomplete="off"
+            aria-required="true"
+          />
+        </div>
+        <div class="field">
+          <label class="field-label" for="deadlineInput">Deadline</label>
+          <input id="deadlineInput" type="date" aria-label="Optional deadline"/>
+        </div>
+      </div>
+      <div class="add-form-row">
+        <button class="add-btn" id="addBtn" aria-label="Add task">
+          + Add task
+        </button>
+      </div>
+    </section>
+
+    <div class="filters" role="group" aria-label="Filter tasks">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="active">Active</button>
+      <button class="filter-btn" data-filter="completed">Completed</button>
+      <button class="filter-btn" data-filter="overdue">Overdue</button>
     </div>
 
-    <ul id="todoList" class="todo-list"></ul>
-    <p class="small-muted" style="margin-top:10px">Rows highlighted red if deadline &lt;24h, orange if &lt;48h. Ordered: red, orange, then others. Tasks persist in localStorage.</p>
+    <main id="taskContainer" aria-label="Task list" aria-live="polite"></main>
+
   </div>
 
+  <div class="toast-wrap" id="toastWrap" aria-live="assertive" aria-atomic="true"></div>
+
   <script>
-    const STORAGE_KEY = 'todo_app_tasks_v1'
-    const todoInput = document.getElementById('todoInput')
-    const deadlineInput = document.getElementById('deadlineInput')
-    const todoList = document.getElementById('todoList')
-    let todos = loadTodos()
+    const STORAGE_KEY = 'tasks_v2_' + location.hostname;
+    const $ = id => document.getElementById(id);
 
-    function saveTodos() {
+    /* ── State ── */
+    let tasks    = loadTasks();
+    let filter   = 'all';
+    let undoStack = [];
+
+    /* ── Persist ── */
+    function saveTasks() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
       } catch (e) {
-        console.error('Failed to save todos', e)
+        showToast('Storage full — task not saved', 'error');
       }
     }
 
-    function loadTodos() {
+    function loadTasks() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY)
-        if (!raw) return []
-        const parsed = JSON.parse(raw)
-        if (!Array.isArray(parsed)) return []
-        return parsed
-      } catch (e) {
-        console.error('Failed to load todos', e)
-        return []
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        // Migrate old format: ensure every task has an `id`
+        return parsed.map(t => ({
+          id: t.id || (Date.now() + Math.random()).toString(36),
+          text: String(t.text || ''),
+          completed: !!t.completed,
+          added: t.added || new Date().toISOString(),
+          deadline: t.deadline || null
+        }));
+      } catch { return []; }
+    }
+
+    /* ── IDs ── */
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+
+    /* ── Add task ── */
+    function addTask() {
+      const text = $('todoInput').value.trim();
+      if (!text) {
+        $('todoInput').focus();
+        $('todoInput').style.borderColor = '#fc8181';
+        setTimeout(() => { $('todoInput').style.borderColor = ''; }, 800);
+        return;
+      }
+      const deadline = $('deadlineInput').value || null;
+      tasks.push({ id: uid(), text, completed: false, added: new Date().toISOString(), deadline });
+      $('todoInput').value = '';
+      $('deadlineInput').value = '';
+      saveTasks();
+      render();
+      $('todoInput').focus();
+    }
+
+    /* ── Mutations ── */
+    function toggleTask(id) {
+      const t = tasks.find(t => t.id === id);
+      if (t) { t.completed = !t.completed; saveTasks(); render(); }
+    }
+
+    function deleteTask(id, animated = true) {
+      const idx = tasks.findIndex(t => t.id === id);
+      if (idx === -1) return;
+      const removed = tasks[idx];
+      undoStack.push({ task: removed, idx });
+      tasks.splice(idx, 1);
+      saveTasks();
+
+      if (animated) {
+        const card = document.querySelector(`[data-id="${id}"]`);
+        if (card) {
+          card.classList.add('removing');
+          card.addEventListener('animationend', () => render(), { once: true });
+        } else { render(); }
+        showToast(`"${truncate(removed.text, 32)}" deleted`, 'normal', {
+          label: 'Undo',
+          action: undoDelete
+        });
+      } else { render(); }
+    }
+
+    function undoDelete() {
+      if (!undoStack.length) return;
+      const { task, idx } = undoStack.pop();
+      tasks.splice(Math.min(idx, tasks.length), 0, task);
+      saveTasks();
+      render();
+      showToast('Task restored');
+    }
+
+    /* ── Copy ── */
+    async function copyTask(id) {
+      const t = tasks.find(t => t.id === id);
+      if (!t) return;
+      const parts = [t.text];
+      if (t.deadline) parts.push('Deadline: ' + formatDate(t.deadline));
+      parts.push('Added: ' + formatDate(t.added.slice(0, 10)));
+      try {
+        await navigator.clipboard.writeText(parts.join(' | '));
+        showToast('Copied to clipboard');
+      } catch {
+        showToast('Copy failed — clipboard access denied', 'error');
       }
     }
 
-    function formatDateISOToLocal(iso) {
-      if (!iso) return ''
-      const d = new Date(iso + 'T00:00:00')
-      if (isNaN(d)) return iso
-      return d.toLocaleDateString()
+    /* ── Urgency ── */
+    function urgency(deadline) {
+      if (!deadline) return 'none';
+      const diff = (new Date(deadline + 'T00:00:00') - new Date()) / 36e5;
+      if (diff < 0)  return 'overdue';
+      if (diff <= 24) return 'urgent';
+      if (diff <= 48) return 'soon';
+      return 'none';
     }
 
-    function todayLocaleDate() {
-      return new Date().toLocaleDateString()
+    const URGENCY_RANK = { overdue: 0, urgent: 1, soon: 2, none: 3 };
+
+    /* ── Formatting ── */
+    function formatDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso + (iso.length === 10 ? 'T00:00:00' : ''));
+      if (isNaN(d)) return iso;
+      return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
     }
 
-    function addTodo() {
-      const text = todoInput.value.trim()
-      if (!text) return
-      const deadlineValue = deadlineInput.value || null
-      todos.push({
-        text,
-        completed: false,
-        added: todayLocaleDate(),
-        deadline: deadlineValue // yyyy-mm-dd or null
-      })
-      todoInput.value = ''
-      deadlineInput.value = ''
-      saveTodos()
-      render()
+    function truncate(str, len) {
+      return str.length > len ? str.slice(0, len) + '…' : str;
     }
 
-    function toggleComplete(i) {
-      todos[i].completed = !todos[i].completed
-      saveTodos()
-      render()
-    }
-
-    function deleteTodo(i) {
-      todos.splice(i,1)
-      saveTodos()
-      render()
-    }
-
-    function copyTaskToClipboard(i) {
-      const t = todos[i]
-      const parts = [`${t.text}`]
-      if (t.deadline) parts.push(`Deadline: ${formatDateISOToLocal(t.deadline)}`)
-      parts.push(`Added: ${t.added}`)
-      const textToCopy = parts.join(' | ')
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(textToCopy).catch(()=>fallbackCopy(textToCopy))
-      } else {
-        fallbackCopy(textToCopy)
-      }
-    }
-
-    function fallbackCopy(text) {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      ta.style.position = 'fixed'
-      ta.style.left = '-9999px'
-      document.body.appendChild(ta)
-      ta.select()
-      try { document.execCommand('copy') } catch(e){}
-      document.body.removeChild(ta)
-    }
-
-    function urgencyRank(deadlineIso) {
-      if (!deadlineIso) return 3
-      const dl = new Date(deadlineIso + 'T00:00:00')
-      const now = new Date()
-      const diffHours = (dl.getTime() - now.getTime()) / (1000*60*60)
-      if (diffHours < 0) return 1
-      if (diffHours <= 24) return 1
-      if (diffHours <= 48) return 2
-      return 3
-    }
-
-    function getUrgencyClass(deadlineIso) {
-      const rank = urgencyRank(deadlineIso)
-      if (rank === 1) return 'urgent-24'
-      if (rank === 2) return 'urgent-48'
-      return ''
-    }
-
-    // create nodes with clickable links for URLs
-    function createTextWithLinks(text) {
-      const urlRegex = /((https?:\/\/|www\.)[^\s<>"]+[^\s<>".,;:!?])/gi
-      const frag = document.createDocumentFragment()
-      let lastIndex = 0
-      let m
+    /* ── URL rendering (safe — only http/https) ── */
+    function textWithLinks(text) {
+      const frag = document.createDocumentFragment();
+      const urlRegex = /((https?:\/\/|www\.)\S+[^\s.,;:!?"')\]])/gi;
+      let last = 0, m;
       while ((m = urlRegex.exec(text)) !== null) {
-        const idx = m.index
-        if (idx > lastIndex) {
-          frag.appendChild(document.createTextNode(text.slice(lastIndex, idx)))
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        let href = m[0];
+        if (!/^https?:\/\//i.test(href)) href = 'https://' + href;
+        // Only allow http/https — block javascript: data: etc.
+        let safe = false;
+        try { safe = /^https?:/i.test(new URL(href).protocol); } catch {}
+        if (safe) {
+          const a = document.createElement('a');
+          a.href = href;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.textContent = m[0];
+          frag.appendChild(a);
+        } else {
+          frag.appendChild(document.createTextNode(m[0]));
         }
-        let url = m[0]
-        if (!/^https?:\/\//i.test(url)) url = 'http://' + url
-        const a = document.createElement('a')
-        a.href = url
-        a.target = '_blank'
-        a.rel = 'noopener noreferrer'
-        a.className = 'task-link'
-        a.textContent = m[0]
-        frag.appendChild(a)
-        lastIndex = idx + m[0].length
+        last = m.index + m[0].length;
       }
-      if (lastIndex < text.length) {
-        frag.appendChild(document.createTextNode(text.slice(lastIndex)))
-      }
-      if (!frag.childNodes.length) return document.createTextNode(text)
-      return frag
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      return frag;
     }
 
+    /* ── Filter ── */
+    function applyFilter(tasks) {
+      switch (filter) {
+        case 'active':    return tasks.filter(t => !t.completed);
+        case 'completed': return tasks.filter(t =>  t.completed);
+        case 'overdue':   return tasks.filter(t => !t.completed && urgency(t.deadline) === 'overdue');
+        default:          return tasks;
+      }
+    }
+
+    /* ── Render ── */
     function render() {
-      todoList.innerHTML = ''
-      const indexed = todos.map((t,i)=>({t,i,rank:urgencyRank(t.deadline)}))
-      indexed.sort((a,b)=>{
-        if (a.rank !== b.rank) return a.rank - b.rank
-        return a.i - b.i
-      })
-      indexed.forEach(({t, i}) => {
-        const li = document.createElement('li')
-        li.className = 'todo-item ' + getUrgencyClass(t.deadline)
+      const container = $('taskContainer');
+      const filtered = applyFilter(tasks);
 
-        const left = document.createElement('div')
-        left.className = 'left'
+      // Sort: by urgency rank (overdue first), then by insertion order
+      const sorted = [...filtered].sort((a, b) => {
+        const ra = a.completed ? 4 : URGENCY_RANK[urgency(a.deadline)];
+        const rb = b.completed ? 4 : URGENCY_RANK[urgency(b.deadline)];
+        return ra - rb;
+      });
 
-        const title = document.createElement('div')
-        title.className = 'title' + (t.completed ? ' completed' : '')
-        title.appendChild(createTextWithLinks(t.text))
+      // Stats
+      const total    = tasks.length;
+      const done     = tasks.filter(t => t.completed).length;
+      const overdueN = tasks.filter(t => !t.completed && urgency(t.deadline) === 'overdue').length;
+      let statsText = `${done} of ${total} complete`;
+      if (overdueN) statsText += ` · ${overdueN} overdue`;
+      $('statsText').textContent = statsText;
 
-        const meta = document.createElement('div')
-        meta.className = 'meta'
-        const added = document.createElement('span')
-        added.textContent = 'Added: ' + t.added
-        meta.appendChild(added)
+      if (!sorted.length) {
+        container.innerHTML = '';
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        const messages = {
+          all:       ['Nothing here yet', 'Add your first task above to get started'],
+          active:    ['All caught up', 'No active tasks — nice work'],
+          completed: ['No completed tasks yet', 'Finish something and it\'ll show up here'],
+          overdue:   ['No overdue tasks', 'You\'re on top of things']
+        };
+        const [title, sub] = messages[filter] || messages.all;
+        empty.innerHTML = `<div class="empty-icon">✦</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div>`;
+        container.appendChild(empty);
+        return;
+      }
 
-        if (t.deadline) {
-          const sep = document.createElement('span')
-          sep.textContent = ' — '
-          const dl = document.createElement('span')
-          dl.textContent = 'Deadline: ' + formatDateISOToLocal(t.deadline)
-          dl.style.marginLeft = '6px'
-          meta.appendChild(sep)
-          meta.appendChild(dl)
+      // Group by urgency for section labels
+      const groups = [
+        { key: 'overdue', label: 'Overdue', items: [] },
+        { key: 'urgent',  label: 'Due soon — under 24h', items: [] },
+        { key: 'soon',    label: 'Coming up — 24–48h', items: [] },
+        { key: 'none',    label: 'Upcoming', items: [] },
+        { key: 'done',    label: 'Completed', items: [] },
+      ];
+      for (const t of sorted) {
+        if (t.completed) { groups[4].items.push(t); continue; }
+        const u = urgency(t.deadline);
+        const g = groups.find(g => g.key === u);
+        if (g) g.items.push(t); else groups[3].items.push(t);
+      }
+
+      const showLabels = filter === 'all' || filter === 'active';
+      const frag = document.createDocumentFragment();
+
+      for (const grp of groups) {
+        if (!grp.items.length) continue;
+        if (showLabels && groups.filter(g => g.items.length).length > 1) {
+          const lbl = document.createElement('div');
+          lbl.className = 'section-label';
+          lbl.textContent = grp.label;
+          frag.appendChild(lbl);
         }
+        const ul = document.createElement('ul');
+        ul.className = 'task-list';
+        ul.setAttribute('role', 'list');
+        for (const t of grp.items) ul.appendChild(buildCard(t));
+        frag.appendChild(ul);
+      }
 
-        left.appendChild(title)
-        left.appendChild(meta)
-
-        const right = document.createElement('div')
-        right.className = 'right'
-
-        const completeBtn = document.createElement('button')
-        completeBtn.className = 'action complete'
-        completeBtn.textContent = t.completed ? 'Undo' : 'Complete'
-        completeBtn.onclick = () => toggleComplete(i)
-
-        const copyBtn = document.createElement('button')
-        copyBtn.className = 'action copy'
-        copyBtn.textContent = 'Copy'
-        copyBtn.onclick = () => copyTaskToClipboard(i)
-
-        const deleteBtn = document.createElement('button')
-        deleteBtn.className = 'action delete'
-        deleteBtn.textContent = 'Delete'
-        deleteBtn.onclick = () => deleteTodo(i)
-
-        right.appendChild(completeBtn)
-        right.appendChild(copyBtn)
-        right.appendChild(deleteBtn)
-
-        li.appendChild(left)
-        li.appendChild(right)
-        todoList.appendChild(li)
-      })
+      container.innerHTML = '';
+      container.appendChild(frag);
     }
 
-    // initial render
-    render()
+    function buildCard(t) {
+      const u = t.completed ? 'none' : urgency(t.deadline);
+      const li = document.createElement('li');
+      li.setAttribute('data-id', t.id);
+      li.className = 'task-card' + (t.completed ? ' completed' : '');
+      li.setAttribute('role', 'listitem');
+
+      // Urgency strip
+      const strip = document.createElement('div');
+      strip.className = 'urgency-strip strip-' + u;
+      strip.setAttribute('aria-hidden', 'true');
+
+      // Body
+      const body = document.createElement('div');
+      body.className = 'task-body';
+
+      // Checkbox
+      const checkWrap = document.createElement('div');
+      checkWrap.className = 'check-wrap';
+      const chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.checked = t.completed;
+      chk.id = 'chk-' + t.id;
+      chk.setAttribute('aria-label', (t.completed ? 'Mark incomplete: ' : 'Mark complete: ') + t.text);
+      chk.addEventListener('change', () => toggleTask(t.id));
+      checkWrap.appendChild(chk);
+
+      // Content
+      const content = document.createElement('div');
+      content.className = 'task-content';
+
+      const textDiv = document.createElement('div');
+      textDiv.className = 'task-text' + (t.completed ? ' done' : '');
+      textDiv.appendChild(textWithLinks(t.text));
+
+      const badges = document.createElement('div');
+      badges.className = 'task-badges';
+
+      if (!t.completed && u !== 'none') {
+        const ub = document.createElement('span');
+        ub.className = 'badge badge-' + u;
+        ub.textContent = u === 'overdue' ? 'Overdue' : u === 'urgent' ? 'Due < 24h' : 'Due < 48h';
+        badges.appendChild(ub);
+      }
+      if (t.completed) {
+        const db = document.createElement('span');
+        db.className = 'badge badge-done';
+        db.textContent = 'Done';
+        badges.appendChild(db);
+      }
+      if (t.deadline) {
+        const dlb = document.createElement('span');
+        dlb.className = 'badge badge-date';
+        dlb.textContent = formatDate(t.deadline);
+        badges.appendChild(dlb);
+      }
+      const addedb = document.createElement('span');
+      addedb.className = 'badge badge-date';
+      addedb.textContent = 'Added ' + formatDate(t.added.slice(0, 10));
+      badges.appendChild(addedb);
+
+      content.appendChild(textDiv);
+      content.appendChild(badges);
+
+      body.appendChild(checkWrap);
+      body.appendChild(content);
+
+      // Actions
+      const actions = document.createElement('div');
+      actions.className = 'task-actions';
+      actions.setAttribute('aria-label', 'Task actions');
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'icon-btn';
+      copyBtn.title = 'Copy';
+      copyBtn.setAttribute('aria-label', 'Copy task to clipboard');
+      copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="1" width="10" height="12" rx="2"/><path d="M3 4H2a1 1 0 0 0-1 1v9a2 2 0 0 0 2 2h8a1 1 0 0 0 1-1v-1"/></svg>';
+      copyBtn.addEventListener('click', () => copyTask(t.id));
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'icon-btn delete';
+      delBtn.title = 'Delete';
+      delBtn.setAttribute('aria-label', 'Delete task');
+      delBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12M6 4V2h4v2M5 4l.5 9h5L11 4"/></svg>';
+      delBtn.addEventListener('click', () => deleteTask(t.id));
+
+      actions.appendChild(copyBtn);
+      actions.appendChild(delBtn);
+
+      li.appendChild(strip);
+      li.appendChild(body);
+      li.appendChild(actions);
+      return li;
+    }
+
+    /* ── Toast ── */
+    function showToast(msg, type = 'normal', cta = null) {
+      const wrap = $('toastWrap');
+      const toast = document.createElement('div');
+      toast.className = 'toast' + (type === 'error' ? ' error' : '');
+      toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+      const span = document.createElement('span');
+      span.textContent = msg;
+      toast.appendChild(span);
+      if (cta) {
+        const btn = document.createElement('button');
+        btn.className = 'toast-action';
+        btn.textContent = cta.label;
+        btn.addEventListener('click', () => { cta.action(); dismiss(toast); });
+        toast.appendChild(btn);
+      }
+      wrap.appendChild(toast);
+      function dismiss(el) {
+        el.classList.add('out');
+        el.addEventListener('animationend', () => el.remove(), { once: true });
+      }
+      const timer = setTimeout(() => dismiss(toast), cta ? 6000 : 2800);
+      toast.addEventListener('mouseenter', () => clearTimeout(timer));
+    }
+
+    /* ── Filters wiring ── */
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        filter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+        render();
+      });
+    });
+
+    /* ── Add wiring ── */
+    $('addBtn').addEventListener('click', addTask);
+    $('todoInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+    $('deadlineInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+
+    /* ── Boot ── */
+    render();
   </script>
 </body>
 </html>
