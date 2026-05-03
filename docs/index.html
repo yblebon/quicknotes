@@ -1,408 +1,627 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Agile Board</title>
-    <style>
-        /* --- Modern CSS Variables --- */
-        :root {
-            --bg-body: #f8fafc;
-            --bg-surface: #ffffff;
-            --bg-column: #f1f5f9;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --noise: #f59e0b;
-            --noise-hover: #d97706;
-            --danger: #ef4444;
-            --danger-hover: #dc2626;
-            --success: #10b981;
-            --border-light: #e2e8f0;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --radius-md: 8px;
-            --radius-lg: 12px;
-            --locked-bg: #fef2f2;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="description" content="Industrial agile board for task and noise management">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Agile Board">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<title>Agile Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0d0d;--paper:#f5f2eb;--paper2:#ede9df;--paper3:#e2ddd0;
+  --amber:#c17f24;--amber2:#8c5a12;--amber-light:#faeeda;
+  --red:#a32d2d;--red-light:#fcebeb;
+  --green:#3b6d11;--green-light:#eaf3de;
+  --blue:#185fa5;--blue-light:#e6f1fb;
+  --border:#c4bfb0;--border2:#9e9a8e;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
 
-        * { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        
-        body { background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px; line-height: 1.5; }
+html,body{height:100%}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:14px;
+  padding:20px;line-height:1.5;
+  min-height:100vh;
+}
 
-        /* --- Header & Controls --- */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-light); }
-        h1 { margin: 0; font-size: 1.75rem; font-weight: 700; color: #1e293b; letter-spacing: -0.025em; }
-        
-        .header-actions { display: flex; gap: 10px; }
-        .btn { padding: 8px 16px; border: none; border-radius: var(--radius-md); font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-        .btn-outline { background: transparent; border: 1px solid var(--border-light); color: var(--text-main); }
-        .btn-outline:hover { background: var(--bg-column); }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-danger:hover { background: var(--danger-hover); }
+/* ── Header ── */
+.board-header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:20px;padding-bottom:16px;
+  border-bottom:2px solid var(--ink);
+  flex-wrap:wrap;gap:12px;
+}
+.board-title{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:-0.02em;line-height:1}
+.board-title span{
+  display:block;font-size:11px;font-weight:400;
+  color:var(--border2);margin-top:4px;
+  letter-spacing:0.08em;text-transform:uppercase;
+}
+.header-btns{display:flex;gap:8px;flex-wrap:wrap}
 
-        /* --- Creator Bar --- */
-        .creator-bar { background: var(--bg-surface); padding: 16px; border-radius: var(--radius-lg); margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); align-items: center; }
-        .input-base { padding: 10px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-size: 0.875rem; outline: none; transition: border-color 0.2s; background: var(--bg-body); }
-        .input-base:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        
-        #new-card-text { flex-grow: 1; min-width: 200px; }
-        .btn-task { background: var(--primary); color: white; }
-        .btn-task:hover { background: var(--primary-hover); }
-        .btn-noise { background: var(--noise); color: white; }
-        .btn-noise:hover { background: var(--noise-hover); }
+/* ── Buttons ── */
+.btn{
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  padding:6px 12px;border:1px solid var(--border);
+  background:var(--paper2);color:var(--ink);
+  cursor:pointer;letter-spacing:0.04em;
+  transition:all 0.15s;white-space:nowrap;
+}
+.btn:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn:active{opacity:0.8}
+.btn-amber{border-color:var(--amber);color:var(--amber2);background:var(--amber-light)}
+.btn-amber:hover{background:var(--amber);color:var(--paper);border-color:var(--amber2)}
+.btn-red{border-color:var(--red);color:var(--red);background:var(--red-light)}
+.btn-red:hover{background:var(--red);color:var(--paper);border-color:var(--red)}
 
-        /* --- Board Layout --- */
-        .workflow-row { background: transparent; margin-bottom: 32px; }
-        .workflow-row h2 { margin-top: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-main); margin-bottom: 16px; }
-        .columns-container { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
-        
-        .column { background: var(--bg-column); border-radius: var(--radius-lg); min-width: 300px; flex: 1; padding: 16px; display: flex; flex-direction: column; border: 1px solid var(--border-light); }
-        .column h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin: 0 0 16px 0; letter-spacing: 0.05em; display: flex; justify-content: space-between; }
-        .card-list { flex-grow: 1; min-height: 150px; display: flex; flex-direction: column; gap: 12px; }
+/* PWA install button (hidden until prompt fires) */
+#install-btn{display:none}
 
-        /* --- Modern Card Styling --- */
-        .card { background: var(--bg-surface); border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-sm); cursor: grab; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid var(--border-light); border-left: 4px solid #cbd5e1; position: relative; }
-        .card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-        .task-card { border-left-color: var(--primary); }
-        .noise-card { border-left-color: var(--noise); }
-        .card.is-locked { background-color: var(--locked-bg); cursor: not-allowed; border-left-color: var(--danger); border-left-style: dashed; }
-        
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
-        .card-title { font-weight: 600; font-size: 0.95rem; line-height: 1.3; color: var(--text-main); word-break: break-word; }
-        
-        /* Card Meta (Priority & Date) */
-        .card-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; font-size: 0.75rem; font-weight: 500; }
-        .badge { padding: 2px 8px; border-radius: 999px; background: var(--bg-column); color: var(--text-muted); }
-        .badge.prio-high { background: #fee2e2; color: #b91c1c; }
-        .badge.prio-medium { background: #fef3c7; color: #b45309; }
-        .badge.prio-low { background: #e0f2fe; color: #0369a1; }
-        .badge.overdue { background: var(--danger); color: white; animation: pulse 2s infinite; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+/* ── Creator Bar ── */
+.creator-bar{
+  background:var(--paper2);border:1px solid var(--border);
+  padding:14px;margin-bottom:20px;
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+}
+.creator-bar::before{
+  content:'> NEW ITEM';font-family:var(--mono);font-size:10px;
+  color:var(--border2);letter-spacing:0.1em;width:100%;
+  display:block;margin-bottom:4px;
+}
+input[type=text],input[type=date],select,textarea{
+  font-family:var(--mono);font-size:12px;
+  padding:7px 10px;border:1px solid var(--border);
+  background:var(--paper);color:var(--ink);
+  outline:none;flex:1;min-width:160px;
+  -webkit-appearance:none;
+}
+input[type=text]:focus,input[type=date]:focus,
+select:focus,textarea:focus{
+  border-color:var(--ink);background:#fff;
+}
+select{min-width:140px;flex:0;cursor:pointer}
+input[type=file]{display:none}
 
-        /* Icons & Actions */
-        .lock-icon { cursor: pointer; font-size: 1.1rem; user-select: none; margin-right: 6px; }
-        .delete-btn { cursor: pointer; color: #94a3b8; font-size: 1.2rem; line-height: 1; transition: color 0.2s; background: none; border: none; padding: 0; }
-        .delete-btn:hover { color: var(--danger); }
+/* ── Section Labels ── */
+.section-label{
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--border2);margin-bottom:10px;
+  padding-left:2px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-        /* History & Inputs */
-        .history-section { max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-        .history-item { font-size: 0.8rem; background: var(--bg-column); padding: 8px; border-radius: 6px; color: var(--text-main); }
-        .history-stage-tag { font-weight: 700; font-size: 0.65rem; color: var(--primary); text-transform: uppercase; margin-bottom: 2px; display: block; }
-        .media-content img { width: 100%; border-radius: 4px; margin-top: 6px; }
-        .media-content a { color: var(--primary); text-decoration: none; font-weight: 600; }
-        
-        .card-input-wrapper input { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 0.8rem; outline: none; background: #f8fafc; transition: all 0.2s; }
-        .card-input-wrapper input:focus { background: white; border-color: var(--primary); }
+/* ── Columns ── */
+.cols{
+  display:flex;gap:10px;overflow-x:auto;
+  padding-bottom:6px;margin-bottom:24px;
+}
+.col{
+  background:var(--paper2);border:1px solid var(--border);
+  min-width:210px;flex:1;display:flex;flex-direction:column;
+}
+.col-head{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:0.1em;text-transform:uppercase;
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--paper3);user-select:none;
+}
+.col-count{
+  background:var(--ink);color:var(--paper);
+  font-size:9px;padding:2px 6px;min-width:18px;text-align:center;
+}
+.col-body{
+  flex:1;min-height:120px;padding:8px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.col.drag-over{border:1.5px dashed var(--amber);background:var(--amber-light)}
 
-        /* System Log */
-        .log-section { background: #0f172a; color: #f8fafc; padding: 20px; border-radius: var(--radius-lg); height: 200px; display: flex; flex-direction: column; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
-        .log-section h3 { margin-top: 0; font-size: 1rem; border-bottom: 1px solid #334155; padding-bottom: 12px; color: #cbd5e1; }
-        #event-log { flex-grow: 1; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6; }
-        .log-time { color: var(--success); margin-right: 8px; }
-        .log-err { color: #f87171; }
-        .drag-over { background: #e2e8f0; border: 2px dashed var(--primary); }
+/* ── Cards ── */
+.card{
+  background:var(--paper);border:1px solid var(--border);
+  padding:12px;cursor:grab;
+  transition:transform 0.15s,box-shadow 0.15s;
+  position:relative;border-left:3px solid var(--border2);
+}
+.card:hover{box-shadow:3px 3px 0 var(--border);transform:translate(-1px,-1px)}
+.card:active{cursor:grabbing}
+.card.task-card{border-left-color:var(--blue)}
+.card.noise-card{border-left-color:var(--amber)}
+.card.is-locked{
+  border-left-color:var(--red);border-left-style:dashed;
+  background:var(--red-light);cursor:not-allowed;opacity:0.85;
+}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.card-title{font-size:13px;font-weight:500;line-height:1.35;word-break:break-word}
+.del-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--border2);font-size:16px;line-height:1;
+  padding:0;flex-shrink:0;transition:color 0.15s;
+}
+.del-btn:hover{color:var(--red)}
+.lock-btn{cursor:pointer;font-family:var(--mono);font-size:10px;margin-right:4px;color:var(--red)}
 
-        /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    </style>
+/* ── Badges ── */
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.badge{
+  font-family:var(--mono);font-size:10px;
+  padding:2px 6px;border:1px solid;letter-spacing:0.03em;
+}
+.badge-blue{background:var(--blue-light);color:#0c447c;border-color:#b5d4f4}
+.badge-amber{background:var(--amber-light);color:#633806;border-color:#fac775}
+.badge-green{background:var(--green-light);color:#27500a;border-color:#c0dd97}
+.badge-red{background:var(--red-light);color:#791f1f;border-color:#f7c1c1;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── History ── */
+.history{max-height:100px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.hist-item{
+  font-family:var(--mono);font-size:10px;
+  background:var(--paper3);padding:5px 7px;
+  border-left:2px solid var(--border2);
+}
+.hist-stage{
+  display:block;color:var(--amber2);font-size:9px;
+  letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1px;
+}
+.hist-link{color:var(--blue);text-decoration:none}
+.hist-link:hover{text-decoration:underline}
+.hist-img{width:100%;margin-top:4px;border:1px solid var(--border)}
+.card-note{
+  width:100%;font-family:var(--mono);font-size:11px;
+  padding:5px 8px;border:1px solid var(--border);
+  background:var(--paper2);color:var(--ink);outline:none;
+}
+.card-note:focus{border-color:var(--amber);background:#fff}
+
+/* ── System Log ── */
+.log-box{
+  background:var(--ink);color:#c8c2b0;
+  font-family:var(--mono);font-size:11px;
+  padding:14px;margin-top:8px;
+}
+.log-box-head{
+  font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
+  color:#666;border-bottom:1px solid #333;
+  padding-bottom:8px;margin-bottom:8px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.log-scroll{height:130px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.log-time{color:#c17f24;margin-right:6px}
+.log-err{color:#f09595}
+.log-ok{color:#97c459}
+
+/* ── PWA Offline Banner ── */
+#offline-banner{
+  display:none;background:var(--amber);color:var(--paper);
+  font-family:var(--mono);font-size:11px;padding:6px 14px;
+  text-align:center;letter-spacing:0.05em;
+  position:sticky;top:0;z-index:100;
+}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:0}
+::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+
+/* ── Mobile ── */
+@media(max-width:600px){
+  body{padding:12px}
+  .board-title{font-size:18px}
+  .cols{flex-direction:column;overflow-x:visible}
+  .col{min-width:unset}
+}
+</style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Modern Agile Board</h1>
-        <div class="header-actions">
-            <input type="file" id="import-file" style="display:none" accept=".json" onchange="importData(event)">
-            
-            <button class="btn btn-outline" onclick="triggerImport()">📥 Import</button>
-            <button class="btn btn-outline" onclick="exportData()">📤 Export</button>
-            <button class="btn btn-danger" onclick="clearBoard()">🗑️ Reset</button>
+<div id="offline-banner">[ OFFLINE MODE — changes saved locally ]</div>
+
+<div class="board-header">
+  <div class="board-title">
+    AGILE BOARD
+    <span>task &amp; noise management system</span>
+  </div>
+  <div class="header-btns">
+    <button id="install-btn" class="btn btn-amber" onclick="installPWA()">[ INSTALL APP ]</button>
+    <input type="file" id="import-file" accept=".json" onchange="importData(event)">
+    <button class="btn" onclick="document.getElementById('import-file').click()">[ IMPORT ]</button>
+    <button class="btn" onclick="exportData()">[ EXPORT ]</button>
+    <button class="btn btn-red" onclick="clearBoard()">[ RESET ]</button>
+  </div>
+</div>
+
+<div class="creator-bar">
+  <input type="text" id="new-card-text" placeholder="describe the task or noise item...">
+  <select id="new-card-priority">
+    <option value="Low">LOW</option>
+    <option value="Medium" selected>MEDIUM</option>
+    <option value="High">HIGH</option>
+  </select>
+  <input type="date" id="new-card-date">
+  <button class="btn btn-amber" onclick="createCard('task')">+ TASK</button>
+  <button class="btn" onclick="createCard('noise')">+ NOISE</button>
+</div>
+
+<div class="section-label">task pipeline</div>
+<div class="cols">
+  <div class="col" id="task-backlog" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+    <div class="col-head">backlog <span class="col-count" id="cnt-task-backlog">0</span></div>
+    <div class="col-body"></div>
+  </div>
+  <div class="col" id="refinement" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+    <div class="col-head">refinement <span class="col-count" id="cnt-refinement">0</span></div>
+    <div class="col-body"></div>
+  </div>
+  <div class="col" id="doing" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+    <div class="col-head">doing <span class="col-count" id="cnt-doing">0</span></div>
+    <div class="col-body"></div>
+  </div>
+  <div class="col" id="blocked" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+    <div class="col-head">blocked <span class="col-count" id="cnt-blocked">0</span></div>
+    <div class="col-body"></div>
+  </div>
+  <div class="col" id="done" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+    <div class="col-head">done <span class="col-count" id="cnt-done">0</span></div>
+    <div class="col-body"></div>
+  </div>
+</div>
+
+<div class="section-label">external noise tracking</div>
+<div class="cols">
+  <div class="col" id="noise-backlog" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+    <div class="col-head">noise backlog <span class="col-count" id="cnt-noise-backlog">0</span></div>
+    <div class="col-body"></div>
+  </div>
+  <div class="col" id="wait" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+    <div class="col-head">wait <span class="col-count" id="cnt-wait">0</span></div>
+    <div class="col-body"></div>
+  </div>
+  <div class="col" id="coincidence" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+    <div class="col-head">coincidence <span class="col-count" id="cnt-coincidence">0</span></div>
+    <div class="col-body"></div>
+  </div>
+</div>
+
+<div class="log-box">
+  <div class="log-box-head">
+    <span>system diagnostics</span>
+    <button class="btn" style="font-size:9px;padding:3px 8px" onclick="clearLogs()">[ CLEAR LOG ]</button>
+  </div>
+  <div class="log-scroll" id="event-log"></div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let boardData = JSON.parse(localStorage.getItem('agileBoardPWA')) || { cards:[], logs:[] };
+const priW = { High:3, Medium:2, Low:1 };
+
+function isOverdue(d) {
+  if (!d) return false;
+  const t = new Date(); t.setHours(0,0,0,0);
+  const dd = new Date(d); dd.setHours(0,0,0,0);
+  return dd < t;
+}
+
+// ── Render ─────────────────────────────────────────────────────────────
+function render() {
+  document.querySelectorAll('.col-body').forEach(b => b.innerHTML = '');
+  const counts = {};
+  document.querySelectorAll('[id^=cnt-]').forEach(el => counts[el.id.replace('cnt-','')] = 0);
+
+  [...boardData.cards]
+    .sort((a,b) => (priW[b.priority]||0) - (priW[a.priority]||0))
+    .forEach(card => {
+      const el = document.createElement('div');
+      el.id = card.id;
+      el.className = `card ${card.type}-card ${card.locked ? 'is-locked' : ''}`;
+      el.draggable = !card.locked;
+      el.ondragstart = e => e.dataTransfer.setData('cardId', card.id);
+
+      // Touch drag support
+      el.addEventListener('touchstart', touchStart, {passive:true});
+      el.addEventListener('touchmove', touchMove, {passive:false});
+      el.addEventListener('touchend', touchEnd, {passive:true});
+
+      let badges = '';
+      if (card.priority) {
+        const cls = card.priority==='High' ? 'badge-red' : card.priority==='Medium' ? 'badge-amber' : 'badge-blue';
+        badges += `<span class="badge ${cls}">${card.priority.toUpperCase()}</span>`;
+      }
+      if (card.dueDate) {
+        const ov = isOverdue(card.dueDate) && card.column !== 'done' && card.column !== 'coincidence';
+        badges += `<span class="badge ${ov ? 'badge-red' : 'badge-green'}">${card.dueDate}</span>`;
+      }
+      const typeLabel = card.type === 'task' ? 'badge-blue' : 'badge-amber';
+      badges += `<span class="badge ${typeLabel}">${card.type.toUpperCase()}</span>`;
+
+      let hist = '';
+      Object.entries(card.stageComments || {}).forEach(([stage, content]) => {
+        let inner = /\.(jpeg|jpg|gif|png|webp)$/i.test(content)
+          ? `<img class="hist-img" src="${content}" alt="attachment">`
+          : content.startsWith('http')
+            ? `<a class="hist-link" href="${content}" target="_blank" rel="noopener">link ↗</a>`
+            : content;
+        hist += `<div class="hist-item"><span class="hist-stage">${stage.replace(/-/g,' ')}</span>${inner}</div>`;
+      });
+
+      const lockBtn = card.column === 'blocked'
+        ? `<span class="lock-btn" onclick="toggleLock('${card.id}')" title="${card.locked?'unlock':'lock'}">[${card.locked?'LCK':'ULK'}]</span>`
+        : '';
+
+      el.innerHTML = `
+        <div class="card-top">
+          <div class="card-title">${lockBtn}${escHtml(card.text)}</div>
+          <button class="del-btn" onclick="deleteCard('${card.id}')" title="delete">×</button>
         </div>
-    </div>
+        ${badges ? `<div class="badges">${badges}</div>` : ''}
+        ${hist ? `<div class="history">${hist}</div>` : ''}
+        <input class="card-note" type="text"
+          placeholder="// note for ${card.column.replace(/-/g,' ')}..."
+          onkeydown="saveNote(event,'${card.id}','${card.column}')">
+      `;
 
-    <div class="creator-bar">
-        <input type="text" id="new-card-text" class="input-base" placeholder="What needs to be done?">
-        
-        <select id="new-card-priority" class="input-base">
-            <option value="Low">⏬ Low Priority</option>
-            <option value="Medium" selected>⏸️ Medium Priority</option>
-            <option value="High">⏫ High Priority</option>
-        </select>
-        
-        <input type="date" id="new-card-date" class="input-base" title="Set Due Date">
-        
-        <button class="btn btn-task" onclick="createNewCard('task')">➕ Add Task</button>
-        <button class="btn btn-noise" onclick="createNewCard('noise')">➕ Add Noise</button>
-    </div>
+      const colEl = document.getElementById(card.column);
+      if (colEl) {
+        colEl.querySelector('.col-body').appendChild(el);
+        if (counts[card.column] !== undefined) counts[card.column]++;
+      }
+    });
 
-    <div class="workflow-row">
-        <h2>Task Pipeline</h2>
-        <div class="columns-container">
-            <div class="column" id="task-backlog" ondrop="drop(event)" ondragover="allowDrop(event)"><h3>Backlog</h3><div class="card-list"></div></div>
-            <div class="column" id="refinement" ondrop="drop(event)" ondragover="allowDrop(event)"><h3>Refinement</h3><div class="card-list"></div></div>
-            <div class="column" id="doing" ondrop="drop(event)" ondragover="allowDrop(event)"><h3>Doing</h3><div class="card-list"></div></div>
-            <div class="column" id="blocked" ondrop="drop(event)" ondragover="allowDrop(event)"><h3>Blocked</h3><div class="card-list"></div></div>
-            <div class="column" id="done" ondrop="drop(event)" ondragover="allowDrop(event)"><h3>Done</h3><div class="card-list"></div></div>
-        </div>
-    </div>
+  Object.entries(counts).forEach(([id, n]) => {
+    const el = document.getElementById('cnt-' + id);
+    if (el) el.textContent = n;
+  });
 
-    <div class="workflow-row">
-        <h2>External Noise Tracking</h2>
-        <div class="columns-container">
-            <div class="column" id="noise-backlog" ondrop="drop(event)" ondragover="allowDrop(event)"><h3>Noise Backlog</h3><div class="card-list"></div></div>
-            <div class="column" id="wait" ondrop="drop(event)" ondragover="allowDrop(event)"><h3>Wait</h3><div class="card-list"></div></div>
-            <div class="column" id="coincidence" ondrop="drop(event)" ondragover="allowDrop(event)"><h3>Coincidence</h3><div class="card-list"></div></div>
-        </div>
-    </div>
+  const logEl = document.getElementById('event-log');
+  logEl.innerHTML = [...boardData.logs].reverse().map(l => `<div>${l}</div>`).join('');
+  save();
+}
 
-    <div class="log-section">
-        <h3>System Diagnostics & Log</h3>
-        <div id="event-log"></div>
-    </div>
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-    <script>
-        // --- 1. STATE MANAGEMENT ---
-        let boardData = JSON.parse(localStorage.getItem('modernScrumBoard')) || { cards: [], logs: [] };
-        const priorityWeights = { 'High': 3, 'Medium': 2, 'Low': 1 };
+// ── Actions ────────────────────────────────────────────────────────────
+function createCard(type) {
+  const txt = document.getElementById('new-card-text');
+  const pri = document.getElementById('new-card-priority');
+  const date = document.getElementById('new-card-date');
+  if (!txt.value.trim()) { alert('enter a title'); return; }
+  boardData.cards.push({
+    id: 'c' + Date.now(),
+    type, text: txt.value.trim(),
+    priority: pri.value,
+    dueDate: date.value,
+    column: type === 'task' ? 'task-backlog' : 'noise-backlog',
+    stageComments: {},
+    locked: false
+  });
+  log(`created ${type}: "${txt.value.trim()}" [${pri.value}]`);
+  txt.value = ''; date.value = '';
+  render();
+}
 
-        // Helper: Check if a date string is strictly in the past
-        function isOverdue(dateString) {
-            if (!dateString) return false;
-            const today = new Date();
-            today.setHours(0,0,0,0); // Normalize today to midnight
-            const dueDate = new Date(dateString);
-            dueDate.setHours(0,0,0,0);
-            return dueDate < today;
-        }
+function toggleLock(id) {
+  const c = boardData.cards.find(c => c.id === id);
+  if (!c) return;
+  c.locked = !c.locked;
+  log(`card ${c.locked ? 'locked' : 'unlocked'}: ${c.text.substring(0,30)}`);
+  render();
+}
 
-        // --- 2. CORE RENDERER ---
-        function render() {
-            document.querySelectorAll('.card-list').forEach(list => list.innerHTML = '');
-            
-            // SORTING LOGIC: Sort cards by priority (Highest first) before rendering
-            const sortedCards = [...boardData.cards].sort((a, b) => {
-                const weightA = priorityWeights[a.priority] || 0;
-                const weightB = priorityWeights[b.priority] || 0;
-                return weightB - weightA; // Descending
-            });
+function saveNote(e, id, stage) {
+  if (e.key === 'Enter' && e.target.value.trim()) {
+    const c = boardData.cards.find(c => c.id === id);
+    if (!c) return;
+    c.stageComments[stage] = (c.stageComments[stage] ? c.stageComments[stage] + ' | ' : '') + e.target.value.trim();
+    log(`note saved in ${stage}`);
+    render();
+  }
+}
 
-            sortedCards.forEach(card => {
-                const cardEl = document.createElement('div');
-                cardEl.id = card.id;
-                cardEl.className = `card ${card.type}-card ${card.locked ? 'is-locked' : ''}`;
-                cardEl.draggable = !card.locked; 
-                cardEl.ondragstart = (e) => e.dataTransfer.setData("cardId", card.id);
+function deleteCard(id) {
+  if (confirm('delete this card?')) {
+    boardData.cards = boardData.cards.filter(c => c.id !== id);
+    log('card deleted');
+    render();
+  }
+}
 
-                // Meta Badges (Priority & Date)
-                let metaHtml = '';
-                if(card.priority) {
-                    metaHtml += `<span class="badge prio-${card.priority.toLowerCase()}">${card.priority}</span>`;
-                }
-                if(card.dueDate) {
-                    const overdueClass = isOverdue(card.dueDate) && card.column !== 'done' && card.column !== 'coincidence' ? 'overdue' : '';
-                    metaHtml += `<span class="badge ${overdueClass}">📅 ${card.dueDate}</span>`;
-                }
+function clearBoard() {
+  if (confirm('wipe the entire board and logs?')) {
+    localStorage.removeItem('agileBoardPWA');
+    location.reload();
+  }
+}
 
-                // History Assembly
-                let historyHtml = '';
-                Object.keys(card.stageComments).forEach(stage => {
-                    const content = card.stageComments[stage];
-                    let mediaHtml = content.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${content}">` : 
-                                    content.startsWith('http') ? `<a href="${content}" target="_blank">🔗 Link</a>` : `<span>${content}</span>`;
-                    historyHtml += `<div class="history-item"><span class="history-stage-tag">${stage.replace('-', ' ')}</span><div class="media-content">${mediaHtml}</div></div>`;
-                });
+function clearLogs() {
+  boardData.logs = [];
+  log('log cleared');
+  render();
+}
 
-                // Lock Icon
-                const lockIcon = card.column === 'blocked' ? 
-                    `<span class="lock-icon" onclick="toggleLock('${card.id}')" title="Unlock">${card.locked ? '🔒' : '🔓'}</span>` : '';
+function save() {
+  localStorage.setItem('agileBoardPWA', JSON.stringify(boardData));
+}
 
-                cardEl.innerHTML = `
-                    <div class="card-header">
-                        <div class="card-title">
-                            ${lockIcon} ${card.text}
-                        </div>
-                        <button class="delete-btn" onclick="deleteCard('${card.id}')" title="Delete">×</button>
-                    </div>
-                    ${metaHtml ? `<div class="card-meta">${metaHtml}</div>` : ''}
-                    <div class="history-section">${historyHtml}</div>
-                    <div class="card-input-wrapper">
-                        <input type="text" placeholder="Add note to ${card.column.replace('-', ' ')}..." 
-                               onkeydown="saveComment(event, '${card.id}', '${card.column}')">
-                    </div>
-                `;
-                
-                const columnList = document.getElementById(card.column).querySelector('.card-list');
-                columnList.appendChild(cardEl);
-            });
+function log(msg, err = false) {
+  const t = `<span class="log-time">[${new Date().toLocaleTimeString()}]</span>`;
+  const c = err ? `<span class="log-err">${msg}</span>` : msg;
+  boardData.logs.push(`${t} ${c}`);
+  if (boardData.logs.length > 200) boardData.logs = boardData.logs.slice(-200);
+}
 
-            // Logs
-            const logEl = document.getElementById('event-log');
-            logEl.innerHTML = boardData.logs.map(l => `<div>${l}</div>`).reverse().join('');
-            localStorage.setItem('modernScrumBoard', JSON.stringify(boardData));
-        }
+// ── Import / Export ────────────────────────────────────────────────────
+function exportData() {
+  const s = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(boardData, null, 2));
+  const a = document.createElement('a');
+  a.href = s;
+  a.download = `agile_board_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  log('exported json backup');
+}
 
-        // --- 3. ACTIONS ---
-        function createNewCard(type) {
-            const input = document.getElementById('new-card-text');
-            const priorityInput = document.getElementById('new-card-priority');
-            const dateInput = document.getElementById('new-card-date');
-            
-            if (!input.value.trim()) return alert("Please enter a title");
-            
-            boardData.cards.push({
-                id: 'id-' + Date.now(),
-                type: type,
-                text: input.value,
-                priority: priorityInput.value,
-                dueDate: dateInput.value, // "YYYY-MM-DD" or ""
-                column: type === 'task' ? 'task-backlog' : 'noise-backlog',
-                stageComments: {},
-                locked: false
-            });
-            
-            log(`Created ${type.toUpperCase()}: "${input.value}" [${priorityInput.value}]`);
-            input.value = '';
-            dateInput.value = ''; // Reset date
-            render();
-        }
-
-        function toggleLock(id) {
-            const card = boardData.cards.find(c => c.id === id);
-            card.locked = !card.locked;
-            log(`${card.locked ? 'LOCKED 🔒' : 'UNLOCKED 🔓'} card`);
-            render();
-        }
-
-        function saveComment(e, cardId, stageId) {
-            if (e.key === 'Enter' && e.target.value.trim()) {
-                const card = boardData.cards.find(c => c.id === cardId);
-                card.stageComments[stageId] = (card.stageComments[stageId] ? card.stageComments[stageId] + " | " : "") + e.target.value;
-                log(`Note updated in ${stageId}`);
-                render();
-            }
-        }
-
-        function deleteCard(id) {
-            if(confirm(`Delete this card?`)) {
-                boardData.cards = boardData.cards.filter(c => c.id !== id);
-                log(`Deleted card`);
-                render();
-            }
-        }
-
-        function clearBoard() {
-            if(confirm("Wipe the entire board and logs?")) {
-                localStorage.removeItem('modernScrumBoard');
-                location.reload();
-            }
-        }
-
-        function log(msg, isError = false) {
-            const time = `<span class="log-time">[${new Date().toLocaleTimeString()}]</span>`;
-            const content = isError ? `<span class="log-err">${msg}</span>` : msg;
-            boardData.logs.push(`${time} ${content}`);
-        }
-
-        // --- 4. IMPORT / EXPORT JSON ---
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(boardData, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            // Format file name with today's date
-            const dateStr = new Date().toISOString().split('T')[0];
-            downloadAnchorNode.setAttribute("download", `agile_board_backup_${dateStr}.json`);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            log("Exported JSON backup.");
-        }
-
-        function triggerImport() { document.getElementById('import-file').click(); }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    // Basic validation to ensure it's a board object
-                    if (importedData && Array.isArray(importedData.cards)) {
-                        boardData = importedData;
-                        log("Imported JSON successfully.");
-                        render();
-                    } else {
-                        alert("The JSON file is missing the required 'cards' array.");
-                    }
-                } catch(err) {
-                    alert("Invalid JSON format.");
-                }
-            };
-            reader.readAsText(file);
-            // Reset input so you can import the same file again if needed
-            event.target.value = ""; 
-        }
-
-        // --- 5. DRAG AND DROP ---
-        function allowDrop(e) { 
-            e.preventDefault(); 
-            e.currentTarget.classList.add('drag-over');
-        }
-        
-        document.querySelectorAll('.column').forEach(col => {
-            col.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('drag-over'));
-            col.addEventListener('drop', (e) => e.currentTarget.classList.remove('drag-over'));
-        });
-
-        function drop(e) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-over');
-            
-            const targetColId = e.currentTarget.id;
-            const cardId = e.dataTransfer.getData("cardId");
-            const card = boardData.cards.find(c => c.id === cardId);
-            
-            if (!card) return;
-            if (card.locked) { log(`DENIED: Card is locked!`, true); return; }
-
-            const sourceColId = card.column;
-            let allowed = false;
-
-            if (card.type === 'task') {
-                if (sourceColId === 'task-backlog' && ['refinement', 'doing', 'done'].includes(targetColId)) allowed = true;
-                if (sourceColId === 'refinement' && targetColId === 'doing') allowed = true;
-                if (sourceColId === 'doing' && ['done', 'blocked'].includes(targetColId)) allowed = true;
-                if (sourceColId === 'blocked' && ['doing', 'done'].includes(targetColId)) allowed = true;
-            } else {
-                if (sourceColId === 'noise-backlog' && ['wait', 'coincidence'].includes(targetColId)) allowed = true;
-                if (sourceColId === 'wait' && targetColId === 'coincidence') allowed = true;
-            }
-
-            if (sourceColId === targetColId) allowed = true; 
-
-            if (allowed) {
-                card.column = targetColId;
-                if (targetColId === 'blocked' && sourceColId !== 'blocked') {
-                    card.locked = true;
-                    log(`Moved to Blocked. Card auto-locked.`);
-                } else if (sourceColId !== targetColId) {
-                    log(`Moved card: ${sourceColId} → ${targetColId}`);
-                }
-            } else {
-                log(`INVALID MOVE: ${sourceColId} → ${targetColId}`, true);
-            }
-            render();
-        }
-
-        // Init
-        if(boardData.logs.length === 0) log("Modern System Initialized.");
+function importData(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if (d && Array.isArray(d.cards)) {
+        boardData = d;
+        log(`imported: ${d.cards.length} cards`);
         render();
-    </script>
+      } else {
+        alert('invalid board json: missing cards array');
+      }
+    } catch { alert('invalid json format'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+}
+
+// ── Drag and Drop ──────────────────────────────────────────────────────
+function allowDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function drop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const cardId = e.dataTransfer.getData('cardId');
+  moveCard(cardId, e.currentTarget.id);
+}
+
+function moveCard(cardId, targetColId) {
+  const card = boardData.cards.find(c => c.id === cardId);
+  if (!card) return;
+  if (card.locked) { log('denied: card is locked', true); render(); return; }
+
+  const src = card.column, tgt = targetColId;
+  let ok = false;
+
+  if (card.type === 'task') {
+    if (src === 'task-backlog' && ['refinement','doing','done'].includes(tgt)) ok = true;
+    if (src === 'refinement' && tgt === 'doing') ok = true;
+    if (src === 'doing' && ['done','blocked'].includes(tgt)) ok = true;
+    if (src === 'blocked' && ['doing','done'].includes(tgt)) ok = true;
+  } else {
+    if (src === 'noise-backlog' && ['wait','coincidence'].includes(tgt)) ok = true;
+    if (src === 'wait' && tgt === 'coincidence') ok = true;
+  }
+  if (src === tgt) ok = true;
+
+  if (ok) {
+    card.column = tgt;
+    if (tgt === 'blocked' && src !== 'blocked') {
+      card.locked = true;
+      log('moved to blocked — auto-locked');
+    } else if (src !== tgt) {
+      log(`moved: ${src} → ${tgt}`);
+    }
+  } else {
+    log(`invalid move: ${src} → ${tgt}`, true);
+  }
+  render();
+}
+
+// ── Touch Drag ─────────────────────────────────────────────────────────
+let touchDragging = null, touchClone = null;
+
+function touchStart(e) {
+  const card = e.currentTarget;
+  if (card.classList.contains('is-locked')) return;
+  touchDragging = card.id;
+  touchClone = card.cloneNode(true);
+  touchClone.style.cssText = `
+    position:fixed;opacity:0.85;pointer-events:none;z-index:9999;
+    width:${card.offsetWidth}px;transform:scale(0.97);
+    border:1.5px dashed var(--amber);
+  `;
+  document.body.appendChild(touchClone);
+}
+
+function touchMove(e) {
+  if (!touchDragging || !touchClone) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  touchClone.style.left = (t.clientX - touchClone.offsetWidth / 2) + 'px';
+  touchClone.style.top  = (t.clientY - 20) + 'px';
+  document.querySelectorAll('.col').forEach(c => c.classList.remove('drag-over'));
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  const col = el ? el.closest('.col') : null;
+  if (col) col.classList.add('drag-over');
+}
+
+function touchEnd(e) {
+  if (!touchDragging) return;
+  if (touchClone) { touchClone.remove(); touchClone = null; }
+  document.querySelectorAll('.col').forEach(c => c.classList.remove('drag-over'));
+  const t = e.changedTouches[0];
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  const col = el ? el.closest('.col') : null;
+  if (col) moveCard(touchDragging, col.id);
+  touchDragging = null;
+}
+
+// ── PWA Install ────────────────────────────────────────────────────────
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-btn').style.display = 'inline-flex';
+});
+
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(r => {
+    log(r.outcome === 'accepted' ? 'app installed successfully' : 'install dismissed');
+    deferredPrompt = null;
+    document.getElementById('install-btn').style.display = 'none';
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  log('pwa installed on device');
+});
+
+// ── Offline detection ──────────────────────────────────────────────────
+function updateOnlineStatus() {
+  document.getElementById('offline-banner').style.display = navigator.onLine ? 'none' : 'block';
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+// ── Service Worker Registration ────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => log(`service worker registered (scope: ${reg.scope})`))
+      .catch(err => log(`service worker error: ${err.message}`, true));
+  });
+}
+
+// ── Init ───────────────────────────────────────────────────────────────
+if (boardData.logs.length === 0) log('system initialized — ready');
+render();
+</script>
 </body>
 </html>
